@@ -26,7 +26,7 @@ def get_suggestion(messages, api_key, num_candi=3):
         name = USER_NAME if message['role'] == 'user' else AI_NAME
         conv += f"{name}: {message['content']}"
 
-    eval_model = ChatOpenAI(model="gpt-4-1106-preview", temperature=0.8, openai_api_key=api_key)  # CoT는 다양한 샘플을 만들어야 하기 때문에 temperature를 올려야 함
+    eval_model = ChatOpenAI(model="gpt-4-turbo", temperature=0.8, openai_api_key=api_key)  # CoT는 다양한 샘플을 만들어야 하기 때문에 temperature를 올려야 함
     basic_model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.8, openai_api_key=api_key)  # CoT는 다양한 샘플을 만들어야 하기 때문에 temperature를 올려야 함
 
     class Suggestion(BaseModel):
@@ -114,20 +114,16 @@ if api_key:
                 st.markdown(user_input)
 
             with st.chat_message("👩🏼"):
-                stream = openai.ChatCompletion.create(
+                response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=[
                         {"role": m["role"], "content": m["content"]}
                         for m in st.session_state.messages
-                    ],
-                    stream=True,
+                    ]
                 )
-                response = ""
-                for chunk in stream:
-                    response += chunk['choices'][0]['delta'].get('content', '')
-                    st.write(response, end="")
-
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                assistant_message = response['choices'][0]['message']['content']
+                st.markdown(assistant_message)
+                st.session_state.messages.append({"role": "assistant", "content": assistant_message})
 
     with col2:
         if len(st.session_state.messages) > 2:
