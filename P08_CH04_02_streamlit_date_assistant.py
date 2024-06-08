@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
+import asyncio
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -83,6 +84,13 @@ def get_suggestion(messages, api_key, num_candi=3):
     yield "## Best Suggestion\n"
     yield f"{best_candi_num} th\n\n{best_suggestion['sentiment']}\n\n{best_suggestion['suggestion_text']}"
 
+async def fetch_response(api_key, messages):
+    response = await openai.ChatCompletion.acreate(
+        model="gpt-3.5-turbo",
+        messages=messages
+    )
+    return response
+
 if api_key:
     openai.api_key = api_key
 
@@ -114,13 +122,11 @@ if api_key:
                 st.markdown(user_input)
 
             with st.chat_message("👩🏼"):
-                response = openai.ChatCompletion.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": m["role"], "content": m["content"]}
-                        for m in st.session_state.messages
-                    ]
-                )
+                messages = [
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state.messages
+                ]
+                response = asyncio.run(fetch_response(api_key, messages))
                 assistant_message = response['choices'][0]['message']['content']
                 st.markdown(assistant_message)
                 st.session_state.messages.append({"role": "assistant", "content": assistant_message})
