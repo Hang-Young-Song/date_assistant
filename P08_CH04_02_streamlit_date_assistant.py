@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import openai
-import asyncio
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -21,7 +20,6 @@ AI_NAME = "CuPT"
 api_key = st.text_input("OpenAI API Key", type="password")
 
 def get_suggestion(messages, api_key, num_candi=3):
-
     conv = ""
     for message in messages[1:]:
         name = USER_NAME if message['role'] == 'user' else AI_NAME
@@ -85,6 +83,7 @@ def get_suggestion(messages, api_key, num_candi=3):
     yield f"{best_candi_num} th\n\n{best_suggestion['sentiment']}\n\n{best_suggestion['suggestion_text']}"
 
 async def fetch_response(api_key, messages):
+    openai.api_key = api_key
     response = await openai.ChatCompletion.acreate(
         model="gpt-3.5-turbo",
         messages=messages
